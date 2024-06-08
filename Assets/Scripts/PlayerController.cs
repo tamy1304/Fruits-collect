@@ -2,12 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using static UnityEditor.Experimental.GraphView.GraphView;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
 public class PlayerController : MonoBehaviour
 {
     public float velocidad;
     public float velocidadMax;
+    public float friccionSuelo;
 
     private Rigidbody2D rPlayer;
     private float h;
@@ -49,6 +51,13 @@ public class PlayerController : MonoBehaviour
         rPlayer.AddForce(Vector2.right * velocidad * h);
         float limiteVelocidad = Mathf.Clamp(rPlayer.velocity.x, -velocidadMax, velocidadMax);
         rPlayer.velocity = new Vector2(limiteVelocidad, rPlayer.velocity.y);
+        if (h == 0 && colPies){
+            Vector3 velocidadArreglada = rPlayer.velocity;
+            velocidadArreglada.x *= friccionSuelo;
+            rPlayer.velocity = velocidadArreglada;
+        }
+            
+
     }
 
     void girar(float horizontal)
