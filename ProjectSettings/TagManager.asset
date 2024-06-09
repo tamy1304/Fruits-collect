@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Suelo
   - Plataforma
+  - Pinchos
+  - CaidaAlVacio
   layers:
   - Default
   - TransparentFX

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.ShaderGraph.Internal;
@@ -75,10 +76,10 @@ public class PlayerController : MonoBehaviour
 
     private void recibePulsaciones()
     {
-        if (Input.GetKey(KeyCode.R)) transform.position = posIni;
+        if (Input.GetKey(KeyCode.R)) reaparece();
         h = Input.GetAxisRaw("Horizontal");
         if ((h > 0 && !miraDerecha) || h < 0 && miraDerecha) girar();
-        if (Input.GetButtonDown("Jump") && puedoSaltar) salto();
+        if (Input.GetButtonDown("Jump") && puedoSaltar && tocaSuelo) salto();
         if (saltoMejorado) SaltoMejorado();
 
     }
@@ -123,7 +124,7 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.tag == "Plataforma")
         {
-            rPlayer.velocity = Vector3.zero;
+            rPlayer.velocity = Vector3.zero;    
             transform.parent = collision.transform;
             enPlataforma = true;
             tocaSuelo = true;
@@ -139,6 +140,30 @@ public class PlayerController : MonoBehaviour
             enPlataforma = false;
         }
     }
+
+    private void OnTriggerEnter2D(Collider2D collision) {
+        if (collision.gameObject.tag == "Pinchos")
+        {
+            Debug.Log("Quita salud");
+            pierdeVida();
+        }
+        if (collision.gameObject.tag == "CaidaAlVacio")
+        {
+            Debug.Log("Muerte");
+            pierdeVida();
+        }
+    }
+    private void pierdeVida() {
+        Debug.Log("P1erde vida");
+        reaparece();
+    }
+    private void reaparece()
+    {
+        rPlayer.velocity = Vector3.zero;
+        transform.position = posIni;
+    }
+    
+
 
      
     private void variablesAnimador()
