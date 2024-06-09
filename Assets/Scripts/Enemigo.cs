@@ -10,6 +10,11 @@ public class Enemigo : MonoBehaviour
     [SerializeField] private Transform[] puntosMov;
     [SerializeField] private float velocidad;
     [SerializeField] GameObject padre;
+    [SerializeField] private GameObject parte1;
+    
+    private PolygonCollider2D boxColi;
+    private SpriteRenderer spr1;
+
 
     private int i=0;
 
@@ -20,6 +25,9 @@ public class Enemigo : MonoBehaviour
     void Start()
     {
         escalaIni = transform.localScale;
+        boxColi = parte1.GetComponent<PolygonCollider2D>();
+        spr1 = parte1.GetComponent<SpriteRenderer>();
+
 
     }
 
@@ -50,6 +58,22 @@ public class Enemigo : MonoBehaviour
      
     public void muere()
     {
+        boxColi.enabled = false;
+        StartCoroutine("FadeOut");
+
+    }
+
+    IEnumerator FadeOut()
+    {
+        for (float f = 1f;  f >= 0; f -= 0.2f)
+        {
+            Color c1 = spr1.material.color;
+            c1.a  = f;
+            spr1.material.color = c1;
+            yield return new WaitForSeconds(0.025f);
+        }
+            
+
         Destroy(padre);
     }
 

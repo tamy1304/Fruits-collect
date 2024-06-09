@@ -12,6 +12,7 @@ using static UnityEditor.Searcher.SearcherWindow.Alignment;
 public class PlayerController : MonoBehaviour
 {
     [Header("VALORES CONFIGURABLES")]
+    [SerializeField] private int vida = 3;
     [SerializeField] private float velocidad;
     [SerializeField] private float fuerzaSalto;
     [SerializeField] private bool saltoMejorado;
@@ -26,6 +27,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool colPies = false;
     private Rigidbody2D rPlayer;
     private SpriteRenderer sPlayer;
+    private CapsuleCollider2D ccPlayer;
     private float h;
     private Animator aPlayer;
     private bool miraDerecha = true;
@@ -33,7 +35,7 @@ public class PlayerController : MonoBehaviour
     private bool tocaSuelo = false;
     private bool enPlataforma = false;
     private bool puedoSaltar = false;
-    private bool tocado = false; 
+    private bool tocado = false;
     private Vector2 nuevaVelocidad;
     private Vector3 posIni;
     private Color colorOriginal;
@@ -45,32 +47,38 @@ public class PlayerController : MonoBehaviour
         rPlayer = GetComponent<Rigidbody2D>();
         aPlayer = GetComponent<Animator>();
         sPlayer = GetComponent<SpriteRenderer>();
+        ccPlayer = GetComponent<CapsuleCollider2D>();
         colorOriginal = sPlayer.color;
     }
 
     // Update is called once per frame
     void Update()
     {
-        recibePulsaciones();
-        variablesAnimador();
-
+        if (GameController.gameOn)
+        {
+            recibePulsaciones();
+            variablesAnimador();
+        }     
     }
 
     void FixedUpdate()
     {
-        checkTocaSuelo();
-        if(!tocado )movimientoPlayer();
+        if (GameController.gameOn)
+        {
+            checkTocaSuelo();
+            if (!tocado) movimientoPlayer();
+        }
 
     }
 
-    private void movimientoPlayer() 
+    private void movimientoPlayer()
     {
         if (tocaSuelo && !saltando)
         {
             nuevaVelocidad.Set(velocidad * h, rPlayer.velocity.y);
             rPlayer.velocity = nuevaVelocidad;
         }
-   
+
         else
         {
             if (!tocaSuelo)
@@ -99,7 +107,7 @@ public class PlayerController : MonoBehaviour
         rPlayer.velocity = new Vector2(rPlayer.velocity.x, 0f);
         rPlayer.AddForce(new Vector2(0, fuerzaSalto), ForceMode2D.Impulse);
     }
-    
+
     private void SaltoMejorado()
     {
         if (rPlayer.velocity.y < 0)
@@ -114,22 +122,22 @@ public class PlayerController : MonoBehaviour
 
     private void checkTocaSuelo()
     {
-       
+
         tocaSuelo = Physics2D.OverlapCircle(checkGround.position, checkGroundRadio, capaSuelo);
         if (rPlayer.velocity.y <= 0f)
         {
             saltando = false;
-            if (tocado)
+            if (tocado && tocaSuelo)
             {
                 rPlayer.velocity = Vector2.zero;
                 tocado = false;
                 sPlayer.color = colorOriginal;
             }
         }
-    
+
         if (tocaSuelo && !saltando)
         {
-            puedoSaltar = true;            
+            puedoSaltar = true;
         }
     }
 
@@ -138,8 +146,8 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.tag == "Plataforma")
         {
-            rPlayer.velocity = Vector3.zero;   
-            
+            rPlayer.velocity = Vector3.zero;
+
             transform.parent = collision.transform;
             enPlataforma = true;
             tocaSuelo = true;
@@ -150,11 +158,11 @@ public class PlayerController : MonoBehaviour
             toque(collision.transform.position.x);
         }
 
-        if (collision.gameObject.tag == "SobreEnemigo")
+        if (collision.gameObject.tag == "SobreEnemigo" && !tocado)
         {
             collision.gameObject.SendMessage("muere");
         }
-    
+
 
     }
 
@@ -162,18 +170,34 @@ public class PlayerController : MonoBehaviour
     {
         if (!tocado)
         {
-            Color nuevoColor = new Color(255f / 255f, 153f / 255f, 153f / 255f);
-            sPlayer.color = nuevoColor;
-            tocado = true;
-            float lado = Mathf.Sign(posX - transform.position.x);
-            rPlayer.velocity = Vector2.zero;
-            rPlayer.AddForce(new Vector2(fuerzaToque * -lado, fuerzaToque), ForceMode2D.Impulse);
-            
+            if (vida > 1)
+            {
+                Color nuevoColor = new Color(255f / 255f, 153f / 255f, 153f / 255f);
+                sPlayer.color = nuevoColor;
+                tocado = true;
+                float lado = Mathf.Sign(posX - transform.position.x);
+                rPlayer.velocity = Vector2.zero;
+                rPlayer.AddForce(new Vector2(fuerzaToque * -lado, fuerzaToque), ForceMode2D.Impulse);
+                vida--;
+            }
+            else
+            {
+                muertePlayer();
+            }
 
         }
-        
+
     }
-    
+
+    private void muertePlayer()
+    {
+        aPlayer.Play("Muerto");
+        GameController.gameOn = false;
+        rPlayer.velocity = Vector2.zero;
+        rPlayer.AddForce(new Vector2(0.0f, fuerzaSalto), ForceMode2D.Impulse);
+        ccPlayer.enabled = false;
+
+    }
 
 
     private void OnCollisionExit2D(Collision2D collision)
@@ -189,6 +213,7 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.tag == "Pinchos")
         {
             Debug.Log("Quita salud");
+            muertePlayer();
             pierdeVida();
         }
         if (collision.gameObject.tag == "CaidaAlVacio")
@@ -199,7 +224,7 @@ public class PlayerController : MonoBehaviour
     }
     private void pierdeVida() {
         Debug.Log("P1erde vida");
-        reaparece();
+        //reaparece();
     }
     private void reaparece()
     {
