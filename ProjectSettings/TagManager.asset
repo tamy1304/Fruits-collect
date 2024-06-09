@@ -5,11 +5,12 @@ TagManager:
   serializedVersion: 2
   tags:
   - Suelo
+  - Plataforma
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Suelo
   - Water
   - UI
   - 
