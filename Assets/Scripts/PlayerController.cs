@@ -61,6 +61,7 @@ public class PlayerController : MonoBehaviour
             nuevaVelocidad.Set(velocidad * h, rPlayer.velocity.y);
             rPlayer.velocity = nuevaVelocidad;
         }
+   
         else
         {
             if (!tocaSuelo)
@@ -104,6 +105,7 @@ public class PlayerController : MonoBehaviour
 
     private void checkTocaSuelo()
     {
+       
         tocaSuelo = Physics2D.OverlapCircle(checkGround.position, checkGroundRadio, capaSuelo);
         if (rPlayer.velocity.y <= 0f)
         {
@@ -124,6 +126,7 @@ public class PlayerController : MonoBehaviour
             rPlayer.velocity = Vector3.zero;
             transform.parent = collision.transform;
             enPlataforma = true;
+            tocaSuelo = true;
         }
         
     }
@@ -137,7 +140,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
+     
     private void variablesAnimador()
     {
         aPlayer.SetFloat("VelocidadX", Mathf.Abs(rPlayer.velocity.x));
