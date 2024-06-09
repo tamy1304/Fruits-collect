@@ -8,6 +8,8 @@ TagManager:
   - Plataforma
   - Pinchos
   - CaidaAlVacio
+  - Enemigo
+  - SobreEnemigo
   layers:
   - Default
   - TransparentFX

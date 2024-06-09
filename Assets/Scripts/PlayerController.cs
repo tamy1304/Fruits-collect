@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
 using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -19,10 +20,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform checkGround;
     [SerializeField] private float checkGroundRadio;
     [SerializeField] private LayerMask capaSuelo;
+    [SerializeField] private float fuerzaToque;
 
     [Header("VALORES INFORMATIVOS")]
     [SerializeField] private bool colPies = false;
     private Rigidbody2D rPlayer;
+    private SpriteRenderer sPlayer;
     private float h;
     private Animator aPlayer;
     private bool miraDerecha = true;
@@ -30,8 +33,10 @@ public class PlayerController : MonoBehaviour
     private bool tocaSuelo = false;
     private bool enPlataforma = false;
     private bool puedoSaltar = false;
+    private bool tocado = false; 
     private Vector2 nuevaVelocidad;
     private Vector3 posIni;
+    private Color colorOriginal;
 
     // Start is called before the first frame update
     void Start()
@@ -39,6 +44,8 @@ public class PlayerController : MonoBehaviour
         posIni = transform.position;
         rPlayer = GetComponent<Rigidbody2D>();
         aPlayer = GetComponent<Animator>();
+        sPlayer = GetComponent<SpriteRenderer>();
+        colorOriginal = sPlayer.color;
     }
 
     // Update is called once per frame
@@ -52,7 +59,8 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         checkTocaSuelo();
-        movimientoPlayer();
+        if(!tocado )movimientoPlayer();
+
     }
 
     private void movimientoPlayer() 
@@ -111,11 +119,17 @@ public class PlayerController : MonoBehaviour
         if (rPlayer.velocity.y <= 0f)
         {
             saltando = false;
+            if (tocado)
+            {
+                rPlayer.velocity = Vector2.zero;
+                tocado = false;
+                sPlayer.color = colorOriginal;
+            }
         }
     
         if (tocaSuelo && !saltando)
         {
-            puedoSaltar = true;
+            puedoSaltar = true;            
         }
     }
 
@@ -124,15 +138,45 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.tag == "Plataforma")
         {
-            rPlayer.velocity = Vector3.zero;    
+            rPlayer.velocity = Vector3.zero;   
+            
             transform.parent = collision.transform;
             enPlataforma = true;
             tocaSuelo = true;
         }
+
+        if (collision.gameObject.tag == "Enemigo")
+        {
+            toque(collision.transform.position.x);
+        }
+
+        if (collision.gameObject.tag == "SobreEnemigo")
+        {
+            collision.gameObject.SendMessage("muere");
+        }
+    
+
+    }
+
+    private void toque(float posX)
+    {
+        if (!tocado)
+        {
+            Color nuevoColor = new Color(255f / 255f, 153f / 255f, 153f / 255f);
+            sPlayer.color = nuevoColor;
+            tocado = true;
+            float lado = Mathf.Sign(posX - transform.position.x);
+            rPlayer.velocity = Vector2.zero;
+            rPlayer.AddForce(new Vector2(fuerzaToque * -lado, fuerzaToque), ForceMode2D.Impulse);
+            
+
+        }
         
     }
-     
-     private void OnCollisionExit2D(Collision2D collision)
+    
+
+
+    private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.gameObject.tag == "Plataforma")
         {

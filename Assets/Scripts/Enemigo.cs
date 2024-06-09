@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Tilemaps;
 using UnityEngine;
 
 
@@ -8,6 +9,7 @@ public class Enemigo : MonoBehaviour
 
     [SerializeField] private Transform[] puntosMov;
     [SerializeField] private float velocidad;
+    [SerializeField] GameObject padre;
 
     private int i=0;
 
@@ -46,5 +48,9 @@ public class Enemigo : MonoBehaviour
         transform.localScale = escalaTemp;
     }
      
+    public void muere()
+    {
+        Destroy(padre);
+    }
 
 }
