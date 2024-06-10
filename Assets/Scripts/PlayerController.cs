@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Rendering;
 using static UnityEditor.Experimental.GraphView.GraphView;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
@@ -23,7 +24,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask capaSuelo;
     [SerializeField] private float fuerzaToque;
 
-    [Header("VALORES INFORMATIVOS")]
+    [Header("BARRA DE VIDA")]
+    [SerializeField] private GameObject barraVida;
+    [SerializeField] private Sprite vida3, vida2, vida1, vida0;
+
+
+        [Header("VALORES INFORMATIVOS")]
     [SerializeField] private bool colPies = false;
     private Rigidbody2D rPlayer;
     private SpriteRenderer sPlayer;
@@ -197,6 +203,7 @@ public class PlayerController : MonoBehaviour
                 rPlayer.velocity = Vector2.zero;
                 rPlayer.AddForce(new Vector2(fuerzaToque * -lado, fuerzaToque), ForceMode2D.Impulse);
                 vida--;
+                BarraVida(vida);
             }
             else
             {
@@ -207,8 +214,16 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    private void BarraVida(int salud)
+    {
+        if(salud == 2) barraVida.GetComponent<Image>().sprite = vida2;
+        if(salud == 1) barraVida.GetComponent<Image>().sprite = vida1;
+    }
+
+
     private void muertePlayer()
     {
+        barraVida.GetComponent<Image>().sprite = vida0;
         aPlayer.Play("Muerto");
         GameController.gameOn = false;
         rPlayer.velocity = Vector2.zero;
