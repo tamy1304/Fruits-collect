@@ -36,9 +36,13 @@ public class PlayerController : MonoBehaviour
     private bool enPlataforma = false;
     private bool puedoSaltar = false;
     private bool tocado = false;
+    private bool muerto = false;
     private Vector2 nuevaVelocidad;
     private Vector3 posIni;
     private Color colorOriginal;
+    private Camera camara;
+    private float posPlayer, altoCam, altoPlayer;
+
 
     // Start is called before the first frame update
     void Start()
@@ -49,6 +53,11 @@ public class PlayerController : MonoBehaviour
         sPlayer = GetComponent<SpriteRenderer>();
         ccPlayer = GetComponent<CapsuleCollider2D>();
         colorOriginal = sPlayer.color;
+        camara = Camera.main;
+
+        
+        altoCam = camara.orthographicSize * 2;
+        altoPlayer = GetComponent<Renderer>().bounds.size.y;
     }
 
     // Update is called once per frame
@@ -58,7 +67,20 @@ public class PlayerController : MonoBehaviour
         {
             recibePulsaciones();
             variablesAnimador();
-        }     
+        }
+        if (muerto)
+        {
+            posPlayer = camara.transform.InverseTransformDirection(transform.position - camara.transform.position).y;
+            if (posPlayer < ((altoCam / 2) * -1) - (altoPlayer / 2)){
+                Invoke("llamaRecarga", 0.5f);
+                muerto = false;
+            }
+        }
+    }
+
+    private void llamaRecarga()
+    {
+        GameController.playerMuerto = true;
     }
 
     void FixedUpdate()
@@ -89,15 +111,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     private void recibePulsaciones()
     {
-        if (Input.GetKey(KeyCode.R)) reaparece();
+        if (Input.GetKey(KeyCode.R)) GameController.playerMuerto = true;
         h = Input.GetAxisRaw("Horizontal");
         if ((h > 0 && !miraDerecha) || h < 0 && miraDerecha) girar();
         if (Input.GetButtonDown("Jump") && puedoSaltar && tocaSuelo) salto();
         if (saltoMejorado) SaltoMejorado();
-
     }
 
     private void salto()
@@ -144,7 +164,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.tag == "Plataforma")
+        if (collision.gameObject.tag == "Plataforma" && !muerto )
         {
             rPlayer.velocity = Vector3.zero;
 
@@ -153,17 +173,15 @@ public class PlayerController : MonoBehaviour
             tocaSuelo = true;
         }
 
-        if (collision.gameObject.tag == "Enemigo")
+        if (collision.gameObject.tag == "Enemigo" && !muerto)
         {
             toque(collision.transform.position.x);
         }
 
-        if (collision.gameObject.tag == "SobreEnemigo" && !tocado)
+        if (collision.gameObject.tag == "SobreEnemigo" && !tocado && !muerto)
         {
             collision.gameObject.SendMessage("muere");
         }
-
-
     }
 
     private void toque(float posX)
@@ -196,13 +214,12 @@ public class PlayerController : MonoBehaviour
         rPlayer.velocity = Vector2.zero;
         rPlayer.AddForce(new Vector2(0.0f, fuerzaSalto), ForceMode2D.Impulse);
         ccPlayer.enabled = false;
-
-    }
-
+        muerto = true;
+    } 
 
     private void OnCollisionExit2D(Collision2D collision)
     {
-        if (collision.gameObject.tag == "Plataforma")
+        if (collision.gameObject.tag == "Plataforma" && !muerto)
         {
             transform.parent = null;
             enPlataforma = false;
@@ -210,31 +227,19 @@ public class PlayerController : MonoBehaviour
     }
 
     private void OnTriggerEnter2D(Collider2D collision) {
-        if (collision.gameObject.tag == "Pinchos")
+        if (collision.gameObject.tag == "Pinchos" && !muerto)
         {
             Debug.Log("Quita salud");
             muertePlayer();
-            pierdeVida();
+
         }
         if (collision.gameObject.tag == "CaidaAlVacio")
         {
             Debug.Log("Muerte");
-            pierdeVida();
+            Invoke("llamaRecarga", 0.5f);
         }
     }
-    private void pierdeVida() {
-        Debug.Log("P1erde vida");
-        //reaparece();
-    }
-    private void reaparece()
-    {
-        rPlayer.velocity = Vector3.zero;
-        transform.position = posIni;
-    }
-    
-
-
-     
+         
     private void variablesAnimador()
     {
         aPlayer.SetFloat("VelocidadX", Mathf.Abs(rPlayer.velocity.x));
@@ -246,12 +251,10 @@ public class PlayerController : MonoBehaviour
 
     void girar()
     {
-
         miraDerecha = !miraDerecha;
         Vector3 escalaGiro = transform.localScale;
         escalaGiro.x = escalaGiro.x * -1;
         transform.localScale = escalaGiro;
-
     }
 
     private void OnDrawGizmos()
