@@ -7,10 +7,18 @@ using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
+    public delegate void Respawn();
+    public static event Respawn respawn;
+
+
     static GameController current;
 
     [SerializeField] private GameObject fundidoNegro;
     [SerializeField] private Text contadorZanahorias;
+
+    [SerializeField] private PlayerController playerController;
+
+
 
     public static bool gameOn = false;
     private Image sprFundido;
@@ -29,50 +37,39 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
-        /*if (current != null && current != this){
-            Destroy(gameObject);
-            return;
-        }*/
         current = this;
-        //DontDestroyOnLoad(gameObject);
         fundidoNegro.SetActive(true);
     }
 
     private void Start()
     {
         sprFundido = fundidoNegro.GetComponent<Image>();
-        Invoke("QuitaFundido", 0.5f);
-
+        playerController.PlayerMuerto += PlayerMuerto;
+        StartCoroutine(FundidoNegroOff(0.5f));
     }
 
-    private void Update()
+    void PlayerMuerto()
     {
-        if (playerMuerto)
-        {
-            StartCoroutine("PonF");
-            playerMuerto = false;
-        }       
+        gameOn = false;
+        StartCoroutine("FundidoNegroOn");
     }
 
-    private void QuitaFundido()
+    IEnumerator FundidoNegroOff(float retardo)
     {
-        StartCoroutine("QuitaF");
-    }
+        yield return new WaitForSeconds(retardo);
 
-    IEnumerator QuitaF()
-    {
         for (float alpha = 1f; alpha >= 0; alpha -= Time.deltaTime * 2f)
         {
             sprFundido.color = new Color(sprFundido.color.r, sprFundido.color.g, sprFundido.color.b, alpha);
-
             yield return null;
 
         }
+        sprFundido.color = new Color(sprFundido.color.r, sprFundido.color.g, sprFundido.color.b, 0);
         gameOn = true;
 
     }
 
-    IEnumerator PonF()
+    IEnumerator FundidoNegroOn()
     {
         for (float alpha = 0f; alpha <= 1; alpha += Time.deltaTime * 2f)
         {
@@ -81,8 +78,9 @@ public class GameController : MonoBehaviour
             yield return null;
 
         }
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-
+        sprFundido.color = new Color(sprFundido.color.r, sprFundido.color.g, sprFundido.color.b, 1);
+        respawn();
+        StartCoroutine(FundidoNegroOff(1f));
     }
 
 

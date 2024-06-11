@@ -8,10 +8,17 @@ using UnityEngine.UI;
 using UnityEngine.Rendering;
 using static UnityEditor.Experimental.GraphView.GraphView;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using static PlayerController;
+using UnityEditor.Experimental.GraphView;
+
 
 
 public class PlayerController : MonoBehaviour
 {
+    public delegate void MiDelegado();
+    public event MiDelegado PlayerMuerto;
+
+
     [Header("VALORES CONFIGURABLES")]
     [SerializeField] private int vida = 3;
     [SerializeField] private float velocidad;
@@ -36,7 +43,6 @@ public class PlayerController : MonoBehaviour
     private CapsuleCollider2D ccPlayer;
     private float h;
     private Animator aPlayer;
-    private bool miraDerecha = true;
     private bool saltando = false;
     private bool tocaSuelo = false;
     private bool enPlataforma = false;
@@ -47,7 +53,9 @@ public class PlayerController : MonoBehaviour
     private Vector3 posIni;
     private Color colorOriginal;
     private Camera camara;
+    private float dirX = 1;
     private float posPlayer, altoCam, altoPlayer;
+
 
 
     // Start is called before the first frame update
@@ -64,29 +72,36 @@ public class PlayerController : MonoBehaviour
         
         altoCam = camara.orthographicSize * 2;
         altoPlayer = GetComponent<Renderer>().bounds.size.y;
+
+        GameController.respawn += Respawn;
+
+        posIni = transform.position;
+
+
+    }
+
+    void Respawn()
+    {
+        rPlayer.velocity = Vector2.zero;
+        aPlayer.Play("Quieto");
+        if (dirX == -1) girar();
+        if (ccPlayer.enabled == false) ccPlayer.enabled = true;
+        muerto = false;
+        transform.parent = null;
+        if (enPlataforma) enPlataforma = false;
+        transform.position = posIni;
     }
 
     // Update is called once per frame
     void Update()
     {
+        aPlayer.SetBool("GameOn", GameController.gameOn);
+
         if (GameController.gameOn)
         {
             recibePulsaciones();
             variablesAnimador();
         }
-        if (muerto)
-        {
-            posPlayer = camara.transform.InverseTransformDirection(transform.position - camara.transform.position).y;
-            if (posPlayer < ((altoCam / 2) * -1) - (altoPlayer / 2)){
-                Invoke("llamaRecarga", 0.5f);
-                muerto = false;
-            }
-        }
-    }
-
-    private void llamaRecarga()
-    {
-        GameController.playerMuerto = true;
     }
 
     void FixedUpdate()
@@ -121,7 +136,7 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.R)) GameController.playerMuerto = true;
         h = Input.GetAxisRaw("Horizontal");
-        if ((h > 0 && !miraDerecha) || h < 0 && miraDerecha) girar();
+        if ((h > 0 && dirX == -1) || (h < 0 && dirX == 1)) girar();
         if (Input.GetButtonDown("Jump") && puedoSaltar && tocaSuelo) salto();
         if (saltoMejorado) SaltoMejorado();
     }
@@ -186,6 +201,8 @@ public class PlayerController : MonoBehaviour
 
         if (collision.gameObject.tag == "SobreEnemigo" && !tocado && !muerto)
         {
+            rPlayer.velocity = Vector2.zero;
+            rPlayer.AddForce(new Vector2(0.0f, 10f), ForceMode2D.Impulse);
             collision.gameObject.SendMessage("muere");
         }
     }
@@ -230,7 +247,9 @@ public class PlayerController : MonoBehaviour
         rPlayer.AddForce(new Vector2(0.0f, fuerzaSalto), ForceMode2D.Impulse);
         ccPlayer.enabled = false;
         muerto = true;
-    } 
+        PlayerMuerto?.Invoke();
+
+    }
 
     private void OnCollisionExit2D(Collision2D collision)
     {
@@ -244,14 +263,12 @@ public class PlayerController : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision) {
         if (collision.gameObject.tag == "Pinchos" && !muerto)
         {
-            Debug.Log("Quita salud");
             muertePlayer();
 
         }
         if (collision.gameObject.tag == "CaidaAlVacio")
         {
-            Debug.Log("Muerte");
-            Invoke("llamaRecarga", 0.5f);
+            muertePlayer();
         }
     }
          
@@ -266,7 +283,7 @@ public class PlayerController : MonoBehaviour
 
     void girar()
     {
-        miraDerecha = !miraDerecha;
+        dirX *= -1;
         Vector3 escalaGiro = transform.localScale;
         escalaGiro.x = escalaGiro.x * -1;
         transform.localScale = escalaGiro;
@@ -277,4 +294,11 @@ public class PlayerController : MonoBehaviour
         Gizmos.DrawWireSphere(checkGround.position, checkGroundRadio);
 
     }
+
+    private void OnDisable()
+    {
+        GameController.respawn -= Respawn;
+    }
+                                     
+
 }
