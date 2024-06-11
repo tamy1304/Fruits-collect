@@ -36,8 +36,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Sprite vida3, vida2, vida1, vida0;
 
 
-        [Header("VALORES INFORMATIVOS")]
+    [Header("VALORES INFORMATIVOS")]
     [SerializeField] private bool colPies = false;
+
+    [Header("OTROS")]
+    [SerializeField] private GameObject zanahoriaParaPuerta;
+
     private Rigidbody2D rPlayer;
     private SpriteRenderer sPlayer;
     private CapsuleCollider2D ccPlayer;
@@ -50,10 +54,13 @@ public class PlayerController : MonoBehaviour
     private bool tocado = false;
     private bool muerto = false;
     private Vector2 nuevaVelocidad;
-    private Vector3 posIni;
+    public static Vector3 posIni;
     private Color colorOriginal;
     private Camera camara;
     private float dirX = 1;
+    private bool noSaltes = false;
+
+
     private float posPlayer, altoCam, altoPlayer;
 
 
@@ -90,6 +97,8 @@ public class PlayerController : MonoBehaviour
         transform.parent = null;
         if (enPlataforma) enPlataforma = false;
         transform.position = posIni;
+        barraVida.GetComponent<Image>().sprite = vida3;
+        vida = 3;
     }
 
     // Update is called once per frame
@@ -143,10 +152,13 @@ public class PlayerController : MonoBehaviour
 
     private void salto()
     {
-        saltando = true;
-        puedoSaltar = false;
-        rPlayer.velocity = new Vector2(rPlayer.velocity.x, 0f);
-        rPlayer.AddForce(new Vector2(0, fuerzaSalto), ForceMode2D.Impulse);
+        if (!noSaltes)
+        {
+            saltando = true;
+            puedoSaltar = false;
+            rPlayer.velocity = new Vector2(rPlayer.velocity.x, 0f);
+            rPlayer.AddForce(new Vector2(0, fuerzaSalto), ForceMode2D.Impulse);
+        }        
     }
 
     private void SaltoMejorado()
@@ -260,7 +272,8 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision) {
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
         if (collision.gameObject.tag == "Pinchos" && !muerto)
         {
             muertePlayer();
@@ -270,8 +283,37 @@ public class PlayerController : MonoBehaviour
         {
             muertePlayer();
         }
+        if (collision.gameObject.tag == "FinJuego")
+        {
+            GameController.gameOn = false;
+            rPlayer.velocity = Vector3.zero;
+            GameController.FinJuego();
+
+        }
     }
-         
+
+        private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "noSaltes")
+        {
+            noSaltes = true;
+        }
+        if (collision.gameObject.tag == "SueltaZanahorias" && !GameController.soltandoZanahoria && GameController.zanahorias > 0 && GameController.zanahoriasPuerta >0)
+        {
+            GameController.soltandoZanahoria = true;
+            Instantiate(zanahoriaParaPuerta, transform.position, Quaternion.identity);
+
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "noSaltes")
+        {
+            noSaltes = false;
+        }
+    }
+
     private void variablesAnimador()
     {
         aPlayer.SetFloat("VelocidadX", Mathf.Abs(rPlayer.velocity.x));

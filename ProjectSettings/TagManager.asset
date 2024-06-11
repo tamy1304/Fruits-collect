@@ -10,6 +10,11 @@ TagManager:
   - CaidaAlVacio
   - Enemigo
   - SobreEnemigo
+  - Zanahorias
+  - noSaltes
+  - ZanahoriaP
+  - SueltaZanahorias
+  - FinJuego
   layers:
   - Default
   - TransparentFX
