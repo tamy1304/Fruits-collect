@@ -144,6 +144,7 @@ public class GameController : MonoBehaviour
             yield return null;
         }
         sprFundido.color = new Color(sprFundido.color.r, sprFundido.color.g, sprFundido.color.b, 1);
+        SceneManager.LoadScene("Menu");
     }
 
 
